@@ -1,47 +1,46 @@
 from taskwarrior_capsules.capsule import CommandCapsule
 from taskwarrior_capsules.exceptions import CapsuleError
 
-from taskw.warrior import TaskWarriorShellout
-
 
 class Capsule(CommandCapsule):
-    MIN_VERSION = '0.1.3'
+    MIN_VERSION = '0.2'
     MAX_VERSION = '1.0'
 
     def get_params_to_copy(self):
-        try:
-            configuration = self.get_configuration()
-            return configuration['params_to_copy'].split(',')
-        except KeyError:
-            return [
-                'project',
-                'tags',
-            ]
+        return self.configuration.get(
+            'params_to_copy',
+            ','.join(
+                [
+                    'project',
+                    'priority',
+                    'tags',
+                    'due',
+                ]
+            )
+        ).split(',')
 
-    def handle(self, filter_args, extra_args, terminal=None, **kwargs):
-        client = TaskWarriorShellout(marshal=True)
-        filter_command = filter_args + ['status:pending', 'export']
-        results = client._get_json(*filter_command)
+    def handle(self, filter_args, extra_args, **kwargs):
+        results = self.get_matching_tasks(filter_args)
         if len(results) == 0:
             raise CapsuleError("No tasks matched filter")
         if len(results) > 1:
             raise CapsuleError("More than one task matched filter")
-        _, parent_task = client.get_task(
-            uuid=results[0]['uuid']
-        )
+        parent_task = results[0]
 
         # Ideally, we'd also let people change tags and whatnot here,
         # but that's a little too complex for tonight.
-        description = ' '.join(extra_args)
+        description = ' '.join(extra_args).strip()
+        if not description:
+            raise CapsuleError("Task description must be specified")
 
         kwargs = {}
         for param in self.get_params_to_copy():
             kwargs[param] = parent_task.get(param)
 
-        new_task = client.task_add(
+        new_task = self.client.task_add(
             description=description,
             **kwargs
         )
         parent_task['depends'] = [new_task['uuid']]
 
-        client.task_update(parent_task)
+        self.client.task_update(parent_task)
