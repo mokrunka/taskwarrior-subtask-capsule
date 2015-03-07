@@ -62,7 +62,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'taskwarrior_capsules': [
-            'subtask = taskwarrior_subtask_capsule.capsule:Capsule',
+            'subtask = taskwarrior_subtask_capsule.capsule:Subtask',
         ]
     },
 )
