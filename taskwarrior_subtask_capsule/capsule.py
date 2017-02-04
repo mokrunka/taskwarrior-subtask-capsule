@@ -5,10 +5,11 @@ from taskwarrior_capsules.exceptions import CapsuleError
 class Subtask(CommandCapsule):
     """ Adds new 'subtask' command allowing creation of blocking tasks. """
 
-    MIN_VERSION = '0.2.4'
+    MIN_VERSION = '0.2.5'
     MAX_VERSION = '1.0'
-    MIN_TASKWARRIOR_VERSION = '2.3'
-    MAX_TASKWARRIOR_VERSION = '2.4.999'
+    MIN_TASKWARRIOR_VERSION = '2.5'
+    MAX_TASKWARRIOR_VERSION = '2.5.999999'
+    command_name = 'subtask'
 
     def get_params_to_copy(self):
         return self.configuration.get(
